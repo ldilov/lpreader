@@ -5,7 +5,7 @@ cv::Ptr<cv::ml::KNearest> kNearest = cv::ml::KNearest::create();
 
 bool loadAndLearnKNN(void) {
 
-    cv::Mat classificationsMatrix; // ще прочетем номерата на класификациите(класовете) в тази променлива като вектор
+    cv::Mat classificationsMatrix; // С‰Рµ РїСЂРѕС‡РµС‚РµРј РЅРѕРјРµСЂР°С‚Р° РЅР° РєР»Р°СЃРёС„РёРєР°С†РёРёС‚Рµ(РєР»Р°СЃРѕРІРµС‚Рµ) РІ С‚Р°Р·Рё РїСЂРѕРјРµРЅР»РёРІР° РєР°С‚Рѕ РІРµРєС‚РѕСЂ
     cv::FileStorage classificationsFile("charactergroups.xml", cv::FileStorage::READ);
 
     if (classificationsFile.isOpened() == false) {
@@ -13,11 +13,11 @@ bool loadAndLearnKNN(void) {
         return false;
     }
 
-	//вкарваме класификациите в променливата
+	//РІРєР°СЂРІР°РјРµ РєР»Р°СЃРёС„РёРєР°С†РёРёС‚Рµ РІ РїСЂРѕРјРµРЅР»РёРІР°С‚Р°
     classificationsFile["charactergroups"] >> classificationsMatrix;
     classificationsFile.release();
 	
-    cv::Mat imagesFloatsMatrix; //ще прочетем множеството картини от training dataset-a в тази променлива като вектор
+    cv::Mat imagesFloatsMatrix; //С‰Рµ РїСЂРѕС‡РµС‚РµРј РјРЅРѕР¶РµСЃС‚РІРѕС‚Рѕ РєР°СЂС‚РёРЅРё РѕС‚ training dataset-a РІ С‚Р°Р·Рё РїСЂРѕРјРµРЅР»РёРІР° РєР°С‚Рѕ РІРµРєС‚РѕСЂ
     cv::FileStorage imagesFile("images.xml", cv::FileStorage::READ);
 
     if (imagesFile.isOpened() == false) {
@@ -25,11 +25,11 @@ bool loadAndLearnKNN(void) {
         return false;
     }
 
-	//вкарваме картините в променливата
+	//РІРєР°СЂРІР°РјРµ РєР°СЂС‚РёРЅРёС‚Рµ РІ РїСЂРѕРјРµРЅР»РёРІР°С‚Р°
     imagesFile["images"] >> imagesFloatsMatrix;
     imagesFile.release();
 
-    //Търсим най-близкият съсед (к=1 => nearest neighbour alg)
+    //РўСЉСЂСЃРёРј РЅР°Р№-Р±Р»РёР·РєРёСЏС‚ СЃСЉСЃРµРґ (Рє=1 => nearest neighbour alg)
 	kNearest->setDefaultK(1);
     kNearest->train(imagesFloatsMatrix, cv::ml::ROW_SAMPLE, classificationsMatrix);
 
@@ -37,7 +37,7 @@ bool loadAndLearnKNN(void) {
 }
 
 vector<PlateCandidate> getCharsInPlates(vector<PlateCandidate> &plateCadndidatesVector) {
-    int intPlateCounter = 0; // брояч
+    int intPlateCounter = 0; // Р±СЂРѕСЏС‡
     cv::Mat imgContours;
     vector<vector<cv::Point> > contours;
     cv::RNG rng;
@@ -47,32 +47,32 @@ vector<PlateCandidate> getCharsInPlates(vector<PlateCandidate> &plateCadndidates
     }
 
     for (auto &plateCandidate : plateCadndidatesVector) { 		
-        preparation(plateCandidate.plate, plateCandidate.imgGrayscale, plateCandidate.imgThresh); //Преобразуваме в grayscale и threshold-ваме
+        preparation(plateCandidate.plate, plateCandidate.imgGrayscale, plateCandidate.imgThresh); //РџСЂРµРѕР±СЂР°Р·СѓРІР°РјРµ РІ grayscale Рё threshold-РІР°РјРµ
 
-        //извършваме преоразмеряване с 1.6 коеф. = 60%. 
+        //РёР·РІСЉСЂС€РІР°РјРµ РїСЂРµРѕСЂР°Р·РјРµСЂСЏРІР°РЅРµ СЃ 1.6 РєРѕРµС„. = 60%. 
         cv::resize(plateCandidate.imgThresh, plateCandidate.imgThresh, cv::Size(), 1.6, 1.6);
-        //Повторен threshold-инг
+        //РџРѕРІС‚РѕСЂРµРЅ threshold-РёРЅРі
         cv::threshold(plateCandidate.imgThresh, plateCandidate.imgThresh, 0.0, 255.0, CV_THRESH_BINARY | CV_THRESH_OTSU);
 
-         //намираме контурите на вс възможни символи и вкарваме само тези, които са символи
+         //РЅР°РјРёСЂР°РјРµ РєРѕРЅС‚СѓСЂРёС‚Рµ РЅР° РІСЃ РІСЉР·РјРѕР¶РЅРё СЃРёРјРІРѕР»Рё Рё РІРєР°СЂРІР°РјРµ СЃР°РјРѕ С‚РµР·Рё, РєРѕРёС‚Рѕ СЃР° СЃРёРјРІРѕР»Рё
         vector<CharCandidate> vectorOfPossibleCharsInPlate = findPossibleCharsInPlate(plateCandidate.imgGrayscale, plateCandidate.imgThresh);
         
-        //имайки вектор от вс. възможни символи, търсим групи от символи, за които имаме "обвързване" (match-ват)
+        //РёРјР°Р№РєРё РІРµРєС‚РѕСЂ РѕС‚ РІСЃ. РІСЉР·РјРѕР¶РЅРё СЃРёРјРІРѕР»Рё, С‚СЉСЂСЃРёРј РіСЂСѓРїРё РѕС‚ СЃРёРјРІРѕР»Рё, Р·Р° РєРѕРёС‚Рѕ РёРјР°РјРµ "РѕР±РІСЉСЂР·РІР°РЅРµ" (match-РІР°С‚)
         vector<vector<CharCandidate> > listOfVectorsOfMatchingCharsInPlate = findListOfMatchingCharsVectors(vectorOfPossibleCharsInPlate);
 
         if (listOfVectorsOfMatchingCharsInPlate.size() == 0) {
-            plateCandidate.strChars = ""; //предполагаемият рег. номер няма символи, при които имаме "обвързване" 
-            continue;//минаваме на следв. итерация
+            plateCandidate.strChars = ""; //РїСЂРµРґРїРѕР»Р°РіР°РµРјРёСЏС‚ СЂРµРі. РЅРѕРјРµСЂ РЅСЏРјР° СЃРёРјРІРѕР»Рё, РїСЂРё РєРѕРёС‚Рѕ РёРјР°РјРµ "РѕР±РІСЉСЂР·РІР°РЅРµ" 
+            continue;//РјРёРЅР°РІР°РјРµ РЅР° СЃР»РµРґРІ. РёС‚РµСЂР°С†РёСЏ
         }
 
-        for (auto &vectorOfMatchingChars : listOfVectorsOfMatchingCharsInPlate) { //имаме вектори от символи, при които имаме "обвързване" , за вс. от тях:
-            sort(vectorOfMatchingChars.begin(), vectorOfMatchingChars.end(), CharCandidate::sortLeftToRight); //сортираме ляво-> дясно , така че символите да са подредени спрямо своите центрове по оста Х
-            vectorOfMatchingChars = removeInnerOverlappingChars(vectorOfMatchingChars); //махаме препокриващи се символи
+        for (auto &vectorOfMatchingChars : listOfVectorsOfMatchingCharsInPlate) { //РёРјР°РјРµ РІРµРєС‚РѕСЂРё РѕС‚ СЃРёРјРІРѕР»Рё, РїСЂРё РєРѕРёС‚Рѕ РёРјР°РјРµ "РѕР±РІСЉСЂР·РІР°РЅРµ" , Р·Р° РІСЃ. РѕС‚ С‚СЏС…:
+            sort(vectorOfMatchingChars.begin(), vectorOfMatchingChars.end(), CharCandidate::sortLeftToRight); //СЃРѕСЂС‚РёСЂР°РјРµ Р»СЏРІРѕ-> РґСЏСЃРЅРѕ , С‚Р°РєР° С‡Рµ СЃРёРјРІРѕР»РёС‚Рµ РґР° СЃР° РїРѕРґСЂРµРґРµРЅРё СЃРїСЂСЏРјРѕ СЃРІРѕРёС‚Рµ С†РµРЅС‚СЂРѕРІРµ РїРѕ РѕСЃС‚Р° РҐ
+            vectorOfMatchingChars = removeInnerOverlappingChars(vectorOfMatchingChars); //РјР°С…Р°РјРµ РїСЂРµРїРѕРєСЂРёРІР°С‰Рё СЃРµ СЃРёРјРІРѕР»Рё
         }
 
         unsigned int LongestVectorOfCharsSize = 0, LongestVectorOfCharsIndex = 0;
 
-         //от вс. вектори със символи, при които имаме "обвързване" , взимаме  индекса на най-големия
+         //РѕС‚ РІСЃ. РІРµРєС‚РѕСЂРё СЃСЉСЃ СЃРёРјРІРѕР»Рё, РїСЂРё РєРѕРёС‚Рѕ РёРјР°РјРµ "РѕР±РІСЉСЂР·РІР°РЅРµ" , РІР·РёРјР°РјРµ  РёРЅРґРµРєСЃР° РЅР° РЅР°Р№-РіРѕР»РµРјРёСЏ
         for (unsigned int i = 0; i < listOfVectorsOfMatchingCharsInPlate.size(); i++) {
             if (listOfVectorsOfMatchingCharsInPlate[i].size() > LongestVectorOfCharsSize) {
                 LongestVectorOfCharsSize = listOfVectorsOfMatchingCharsInPlate[i].size();
@@ -81,9 +81,9 @@ vector<PlateCandidate> getCharsInPlates(vector<PlateCandidate> &plateCadndidates
         }
         vector<CharCandidate> biggestVectorOfMatchingCharsInPlate = listOfVectorsOfMatchingCharsInPlate[LongestVectorOfCharsIndex];
 
-		//извършваме разпознаване на символите върху най-големият вектор от символи, при които имаме "обвързване"
+		//РёР·РІСЉСЂС€РІР°РјРµ СЂР°Р·РїРѕР·РЅР°РІР°РЅРµ РЅР° СЃРёРјРІРѕР»РёС‚Рµ РІСЉСЂС…Сѓ РЅР°Р№-РіРѕР»РµРјРёСЏС‚ РІРµРєС‚РѕСЂ РѕС‚ СЃРёРјРІРѕР»Рё, РїСЂРё РєРѕРёС‚Рѕ РёРјР°РјРµ "РѕР±РІСЉСЂР·РІР°РЅРµ"
 		plateCandidate.strChars = recogniseCharsInPlate(plateCandidate.imgThresh, biggestVectorOfMatchingCharsInPlate); 
-    } //цикълът приключва
+    } //С†РёРєСЉР»СЉС‚ РїСЂРёРєР»СЋС‡РІР°
 
     return plateCadndidatesVector;
 }
@@ -94,13 +94,13 @@ vector<CharCandidate> findPossibleCharsInPlate(cv::Mat &imgGrayscale, cv::Mat &i
     vector<vector<cv::Point> > contours;
 	imgThreshCopy = imgThresh.clone();
 
-    cv::findContours(imgThreshCopy, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE); //намираме всички контури в рег. номер
+    cv::findContours(imgThreshCopy, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE); //РЅР°РјРёСЂР°РјРµ РІСЃРёС‡РєРё РєРѕРЅС‚СѓСЂРё РІ СЂРµРі. РЅРѕРјРµСЂ
 
     for (auto &contour : contours) {
         CharCandidate CharCandidate(contour);
 
         if (isPossibleChar(CharCandidate)) {
-            vectorOfPossibleChars.push_back(CharCandidate); //ако е предполагаем символ, добавяме го към списъка с предполагаеми символи
+            vectorOfPossibleChars.push_back(CharCandidate); //Р°РєРѕ Рµ РїСЂРµРґРїРѕР»Р°РіР°РµРј СЃРёРјРІРѕР», РґРѕР±Р°РІСЏРјРµ РіРѕ РєСЉРј СЃРїРёСЃСЉРєР° СЃ РїСЂРµРґРїРѕР»Р°РіР°РµРјРё СЃРёРјРІРѕР»Рё
         }
     }
 
@@ -108,8 +108,8 @@ vector<CharCandidate> findPossibleCharsInPlate(cv::Mat &imgGrayscale, cv::Mat &i
 }
 
 bool isPossibleChar(CharCandidate &charCandidate) {
-    //проверяваме дали контурът е възможно да описва символ
-	//сравняваме отношение на размери на правоъгълникът, който обгражда предполагаемите символи, както и всяко негово измерение по отделно
+    //РїСЂРѕРІРµСЂСЏРІР°РјРµ РґР°Р»Рё РєРѕРЅС‚СѓСЂСЉС‚ Рµ РІСЉР·РјРѕР¶РЅРѕ РґР° РѕРїРёСЃРІР° СЃРёРјРІРѕР»
+	//СЃСЂР°РІРЅСЏРІР°РјРµ РѕС‚РЅРѕС€РµРЅРёРµ РЅР° СЂР°Р·РјРµСЂРё РЅР° РїСЂР°РІРѕСЉРіСЉР»РЅРёРєСЉС‚, РєРѕР№С‚Рѕ РѕР±РіСЂР°Р¶РґР° РїСЂРµРґРїРѕР»Р°РіР°РµРјРёС‚Рµ СЃРёРјРІРѕР»Рё, РєР°РєС‚Рѕ Рё РІСЃСЏРєРѕ РЅРµРіРѕРІРѕ РёР·РјРµСЂРµРЅРёРµ РїРѕ РѕС‚РґРµР»РЅРѕ
     if (charCandidate.boundingRect.area() > MIN_PIXEL_AREA &&
         charCandidate.boundingRect.width > MIN_PIXEL_WIDTH && charCandidate.boundingRect.height > MIN_PIXEL_HEIGHT &&
         MIN_ASPECT_RATIO < charCandidate.aspectRatio && charCandidate.aspectRatio < MAX_ASPECT_RATIO) {
@@ -120,18 +120,18 @@ bool isPossibleChar(CharCandidate &charCandidate) {
 }
 
 vector<vector<CharCandidate> > findListOfMatchingCharsVectors(const vector<CharCandidate> &vectorOfPossibleChars) {
-	//взимаме всички евентуални символи в един голям вектор. Преподреждаме така че да имаме вектор от вектори от символи, за които имаме "обвързване"
+	//РІР·РёРјР°РјРµ РІСЃРёС‡РєРё РµРІРµРЅС‚СѓР°Р»РЅРё СЃРёРјРІРѕР»Рё РІ РµРґРёРЅ РіРѕР»СЏРј РІРµРєС‚РѕСЂ. РџСЂРµРїРѕРґСЂРµР¶РґР°РјРµ С‚Р°РєР° С‡Рµ РґР° РёРјР°РјРµ РІРµРєС‚РѕСЂ РѕС‚ РІРµРєС‚РѕСЂРё РѕС‚ СЃРёРјРІРѕР»Рё, Р·Р° РєРѕРёС‚Рѕ РёРјР°РјРµ "РѕР±РІСЉСЂР·РІР°РЅРµ"
     vector<vector<CharCandidate> > listOfVectorsOfMatchingChars;
 
     for (auto &charCandidate : vectorOfPossibleChars) {
 
-         //намираме всички символи от големия вектор, които имат "обвързване" с текущия символ
+         //РЅР°РјРёСЂР°РјРµ РІСЃРёС‡РєРё СЃРёРјРІРѕР»Рё РѕС‚ РіРѕР»РµРјРёСЏ РІРµРєС‚РѕСЂ, РєРѕРёС‚Рѕ РёРјР°С‚ "РѕР±РІСЉСЂР·РІР°РЅРµ" СЃ С‚РµРєСѓС‰РёСЏ СЃРёРјРІРѕР»
         vector<CharCandidate> vectorOfMatchingChars = findVectorOfMatchingChars(charCandidate, vectorOfPossibleChars);
 
-        vectorOfMatchingChars.push_back(charCandidate);//текущият символ го добавяме към евентуалният вектор със символи, за които има "обвързване"
+        vectorOfMatchingChars.push_back(charCandidate);//С‚РµРєСѓС‰РёСЏС‚ СЃРёРјРІРѕР» РіРѕ РґРѕР±Р°РІСЏРјРµ РєСЉРј РµРІРµРЅС‚СѓР°Р»РЅРёСЏС‚ РІРµРєС‚РѕСЂ СЃСЉСЃ СЃРёРјРІРѕР»Рё, Р·Р° РєРѕРёС‚Рѕ РёРјР° "РѕР±РІСЉСЂР·РІР°РЅРµ"
          
         if (vectorOfMatchingChars.size() < MIN_NUMBER_OF_MATCHING_CHARS) {
-            continue; //ако текущият вектор от символи, за които има "обвързване" е твърде малък за да съставя рег. номер, то той не ни върши работа
+            continue; //Р°РєРѕ С‚РµРєСѓС‰РёСЏС‚ РІРµРєС‚РѕСЂ РѕС‚ СЃРёРјРІРѕР»Рё, Р·Р° РєРѕРёС‚Рѕ РёРјР° "РѕР±РІСЉСЂР·РІР°РЅРµ" Рµ С‚РІСЉСЂРґРµ РјР°Р»СЉРє Р·Р° РґР° СЃСЉСЃС‚Р°РІСЏ СЂРµРі. РЅРѕРјРµСЂ, С‚Рѕ С‚РѕР№ РЅРµ РЅРё РІСЉСЂС€Рё СЂР°Р±РѕС‚Р°
         }
        
         listOfVectorsOfMatchingChars.push_back(vectorOfMatchingChars);
@@ -146,7 +146,7 @@ vector<vector<CharCandidate> > findListOfMatchingCharsVectors(const vector<CharC
         
         vector<vector<CharCandidate> > recursivelistOfVectorsOfMatchingChars;
 
-        recursivelistOfVectorsOfMatchingChars = findListOfMatchingCharsVectors(vectorOfPossibleCharsWithCurrentMatchesRemoved);	//скапана рекурсия
+        recursivelistOfVectorsOfMatchingChars = findListOfMatchingCharsVectors(vectorOfPossibleCharsWithCurrentMatchesRemoved);	//СЃРєР°РїР°РЅР° СЂРµРєСѓСЂСЃРёСЏ
 
         for (auto &recursiveVectorOfMatchingChars : recursivelistOfVectorsOfMatchingChars) { 
             listOfVectorsOfMatchingChars.push_back(recursiveVectorOfMatchingChars); 
@@ -163,11 +163,11 @@ vector<CharCandidate> findVectorOfMatchingChars(const CharCandidate &charCandida
 
 	for (auto &possibleMatchingChar : vectorOfChars) {
 
-		//ако търсим обвързване на символ със себе си, то го пропускаме (такъв момент ще има)
+		//Р°РєРѕ С‚СЉСЂСЃРёРј РѕР±РІСЉСЂР·РІР°РЅРµ РЅР° СЃРёРјРІРѕР» СЃСЉСЃ СЃРµР±Рµ СЃРё, С‚Рѕ РіРѕ РїСЂРѕРїСѓСЃРєР°РјРµ (С‚Р°РєСЉРІ РјРѕРјРµРЅС‚ С‰Рµ РёРјР°)
 		if (possibleMatchingChar == charCandidate) {
 			continue;
 		}
-		// сравняваме символите дали са "достойни" за обвързване
+		// СЃСЂР°РІРЅСЏРІР°РјРµ СЃРёРјРІРѕР»РёС‚Рµ РґР°Р»Рё СЃР° "РґРѕСЃС‚РѕР№РЅРё" Р·Р° РѕР±РІСЉСЂР·РІР°РЅРµ
 		double distanceBetweenChars = charDistance(charCandidate, possibleMatchingChar);
 		double angleBetweenChars = charsAngle(charCandidate, possibleMatchingChar);
 		double changeInArea = (double)abs(possibleMatchingChar.boundingRect.area() - charCandidate.boundingRect.area()) / (double)charCandidate.boundingRect.area();
@@ -180,13 +180,13 @@ vector<CharCandidate> findVectorOfMatchingChars(const CharCandidate &charCandida
 			changeInArea < MAX_CHANGE_IN_AREA &&
 			changeInWidth < MAX_CHANGE_IN_WIDTH &&
 			changeInHeight < MAX_CHANGE_IN_HEIGHT) {
-			vectorOfMatchingChars.push_back(possibleMatchingChar); //ако този символ отговаря на изискванията, то го обвързваме/групираме с другите във вектора
+			vectorOfMatchingChars.push_back(possibleMatchingChar); //Р°РєРѕ С‚РѕР·Рё СЃРёРјРІРѕР» РѕС‚РіРѕРІР°СЂСЏ РЅР° РёР·РёСЃРєРІР°РЅРёСЏС‚Р°, С‚Рѕ РіРѕ РѕР±РІСЉСЂР·РІР°РјРµ/РіСЂСѓРїРёСЂР°РјРµ СЃ РґСЂСѓРіРёС‚Рµ РІСЉРІ РІРµРєС‚РѕСЂР°
 		}
 	}
 
 	return vectorOfMatchingChars;
 }
-//Използваме питагорова теорема в координатната система за да намерим разстоянието между двете централни точки
+//РР·РїРѕР»Р·РІР°РјРµ РїРёС‚Р°РіРѕСЂРѕРІР° С‚РµРѕСЂРµРјР° РІ РєРѕРѕСЂРґРёРЅР°С‚РЅР°С‚Р° СЃРёСЃС‚РµРјР° Р·Р° РґР° РЅР°РјРµСЂРёРј СЂР°Р·СЃС‚РѕСЏРЅРёРµС‚Рѕ РјРµР¶РґСѓ РґРІРµС‚Рµ С†РµРЅС‚СЂР°Р»РЅРё С‚РѕС‡РєРё
 double charDistance(const CharCandidate &firstChar, const CharCandidate &secondChar) {
     int intX = abs(firstChar.charCenterX - secondChar.charCenterX);
     int intY = abs(firstChar.charCenterY - secondChar.charCenterY);
@@ -204,24 +204,24 @@ double charsAngle(const CharCandidate &firstChar, const CharCandidate &secondCha
     return degreeAngle;
 }
 
-//при съвпадение на символи (примерно 1 символ отчетен като два еднакви, тъй като се отбелязват два контура, махаме малкия
+//РїСЂРё СЃСЉРІРїР°РґРµРЅРёРµ РЅР° СЃРёРјРІРѕР»Рё (РїСЂРёРјРµСЂРЅРѕ 1 СЃРёРјРІРѕР» РѕС‚С‡РµС‚РµРЅ РєР°С‚Рѕ РґРІР° РµРґРЅР°РєРІРё, С‚СЉР№ РєР°С‚Рѕ СЃРµ РѕС‚Р±РµР»СЏР·РІР°С‚ РґРІР° РєРѕРЅС‚СѓСЂР°, РјР°С…Р°РјРµ РјР°Р»РєРёСЏ
 vector<CharCandidate> removeInnerOverlappingChars(vector<CharCandidate> &vectorOfMatchingChars) {
     vector<CharCandidate> vectorOfMatchingCharsWithInnerCharRemoved(vectorOfMatchingChars);
 
     for (auto &currentChar : vectorOfMatchingChars) {
         for (auto &otherChar : vectorOfMatchingChars) {
             if (currentChar != otherChar) {
-                //ако двата символа имат почти едни и същи центрове, тоест имаме препокриващи се символи
+                //Р°РєРѕ РґРІР°С‚Р° СЃРёРјРІРѕР»Р° РёРјР°С‚ РїРѕС‡С‚Рё РµРґРЅРё Рё СЃСЉС‰Рё С†РµРЅС‚СЂРѕРІРµ, С‚РѕРµСЃС‚ РёРјР°РјРµ РїСЂРµРїРѕРєСЂРёРІР°С‰Рё СЃРµ СЃРёРјРІРѕР»Рё
                 if (charDistance(currentChar, otherChar) < (currentChar.diagSize * MIN_DIAG_SIZE_MULTIPLE_AWAY)) {
-                    // ако първият е по-малък от втория
+                    // Р°РєРѕ РїСЉСЂРІРёСЏС‚ Рµ РїРѕ-РјР°Р»СЉРє РѕС‚ РІС‚РѕСЂРёСЏ
                     if (currentChar.boundingRect.area() < otherChar.boundingRect.area()) {
                         vector<CharCandidate>::iterator currentCharIterator = find(vectorOfMatchingCharsWithInnerCharRemoved.begin(), vectorOfMatchingCharsWithInnerCharRemoved.end(), currentChar);
-                         //ако итератора не стигне края значи не сме стигнали края. Тоест намерили сме го във вектора
+                         //Р°РєРѕ РёС‚РµСЂР°С‚РѕСЂР° РЅРµ СЃС‚РёРіРЅРµ РєСЂР°СЏ Р·РЅР°С‡Рё РЅРµ СЃРјРµ СЃС‚РёРіРЅР°Р»Рё РєСЂР°СЏ. РўРѕРµСЃС‚ РЅР°РјРµСЂРёР»Рё СЃРјРµ РіРѕ РІСЉРІ РІРµРєС‚РѕСЂР°
                         if (currentCharIterator != vectorOfMatchingCharsWithInnerCharRemoved.end()) {
-                            vectorOfMatchingCharsWithInnerCharRemoved.erase(currentCharIterator);//махаме
+                            vectorOfMatchingCharsWithInnerCharRemoved.erase(currentCharIterator);//РјР°С…Р°РјРµ
                         }
                     } else {
-						//вторият е по--малък
+						//РІС‚РѕСЂРёСЏС‚ Рµ РїРѕ--РјР°Р»СЉРє
                         vector<CharCandidate>::iterator otherCharIterator = find(vectorOfMatchingCharsWithInnerCharRemoved.begin(), vectorOfMatchingCharsWithInnerCharRemoved.end(), otherChar);
                         if (otherCharIterator != vectorOfMatchingCharsWithInnerCharRemoved.end()) {
                             vectorOfMatchingCharsWithInnerCharRemoved.erase(otherCharIterator);
@@ -235,11 +235,11 @@ vector<CharCandidate> removeInnerOverlappingChars(vector<CharCandidate> &vectorO
     return vectorOfMatchingCharsWithInnerCharRemoved;
 }
 
-//разпознаване на символите
+//СЂР°Р·РїРѕР·РЅР°РІР°РЅРµ РЅР° СЃРёРјРІРѕР»РёС‚Рµ
 string recogniseCharsInPlate(cv::Mat &imgThresh, vector<CharCandidate> &vectorOfMatchingChars) {
     string strChars;
     cv::Mat imgThreshColor;
-	//сортираме по Х , така че по-малките Х-ове да са по-вляво
+	//СЃРѕСЂС‚РёСЂР°РјРµ РїРѕ РҐ , С‚Р°РєР° С‡Рµ РїРѕ-РјР°Р»РєРёС‚Рµ РҐ-РѕРІРµ РґР° СЃР° РїРѕ-РІР»СЏРІРѕ
     sort(vectorOfMatchingChars.begin(), vectorOfMatchingChars.end(), CharCandidate::sortLeftToRight);
 
     cv::cvtColor(imgThresh, imgThreshColor, CV_GRAY2BGR);
@@ -250,16 +250,16 @@ string recogniseCharsInPlate(cv::Mat &imgThresh, vector<CharCandidate> &vectorOf
         cv::Mat imgROIResized;
         cv::resize(imgROI, imgROIResized, cv::Size(RESIZED_CHAR_IMAGE_WIDTH, RESIZED_CHAR_IMAGE_HEIGHT));
         cv::Mat matROIFloat;
-        imgROIResized.convertTo(matROIFloat, CV_32FC1);//конвертиране във float е не боходимо за алгоритъма според документацията на openCV
+        imgROIResized.convertTo(matROIFloat, CV_32FC1);//РєРѕРЅРІРµСЂС‚РёСЂР°РЅРµ РІСЉРІ float Рµ РЅРµ Р±РѕС…РѕРґРёРјРѕ Р·Р° Р°Р»РіРѕСЂРёС‚СЉРјР° СЃРїРѕСЂРµРґ РґРѕРєСѓРјРµРЅС‚Р°С†РёСЏС‚Р° РЅР° openCV
 
-        cv::Mat matROIFlattenedFloat = matROIFloat.reshape(1, 1);//правиме я един ред
-        cv::Mat matCurrentChar(0, 0, CV_32F); // за текущия символ ни трябва матрица според документацията в OpenCV
+        cv::Mat matROIFlattenedFloat = matROIFloat.reshape(1, 1);//РїСЂР°РІРёРјРµ СЏ РµРґРёРЅ СЂРµРґ
+        cv::Mat matCurrentChar(0, 0, CV_32F); // Р·Р° С‚РµРєСѓС‰РёСЏ СЃРёРјРІРѕР» РЅРё С‚СЂСЏР±РІР° РјР°С‚СЂРёС†Р° СЃРїРѕСЂРµРґ РґРѕРєСѓРјРµРЅС‚Р°С†РёСЏС‚Р° РІ OpenCV
 
         kNearest->findNearest(matROIFlattenedFloat, 1, matCurrentChar);
 
-        float currentChar = (float)matCurrentChar.at<float>(0, 0); //превръщаме го във float
+        float currentChar = (float)matCurrentChar.at<float>(0, 0); //РїСЂРµРІСЂСЉС‰Р°РјРµ РіРѕ РІСЉРІ float
 
-        strChars = strChars + char(int(currentChar));//вкарваме символа
+        strChars = strChars + char(int(currentChar));//РІРєР°СЂРІР°РјРµ СЃРёРјРІРѕР»Р°
     }
 
     return(strChars); 

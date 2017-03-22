@@ -9,8 +9,8 @@ CharCandidate::CharCandidate(vector<cv::Point> InputContour) {
     charCenterX = (boundingRect.x + boundingRect.x + boundingRect.width) / 2;
     charCenterY = (boundingRect.y + boundingRect.y + boundingRect.height) / 2;
 
-    diagSize = sqrt(pow(boundingRect.width, 2) + pow(boundingRect.height, 2)); //за правоъгълник със страни а и b, диагноала е d = sqrt(a^2 + b^2) от питагор. т-ма
-    aspectRatio = (float)boundingRect.width / (float)boundingRect.height; //отношениято ширина : височина
+    diagSize = sqrt(pow(boundingRect.width, 2) + pow(boundingRect.height, 2)); //Р·Р° РїСЂР°РІРѕСЉРіСЉР»РЅРёРє СЃСЉСЃ СЃС‚СЂР°РЅРё Р° Рё b, РґРёР°РіРЅРѕР°Р»Р° Рµ d = sqrt(a^2 + b^2) РѕС‚ РїРёС‚Р°РіРѕСЂ. С‚-РјР°
+    aspectRatio = (float)boundingRect.width / (float)boundingRect.height; //РѕС‚РЅРѕС€РµРЅРёСЏС‚Рѕ С€РёСЂРёРЅР° : РІРёСЃРѕС‡РёРЅР°
 }
 
 bool CharCandidate::operator == (const CharCandidate& otherCandidate) const {
